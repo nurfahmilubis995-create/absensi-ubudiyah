@@ -1,0 +1,1758 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistem Absensi Jamaah Mahasantri - Divisi Ubudiyah</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- HTML5 QR Code Library for Barcode/QR Scanner -->
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+  
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+    /* Custom Scrollbar for modern look */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 10px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 10px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+    /* Scanner layout improvements */
+    #reader {
+      border: none !important;
+      border-radius: 1rem;
+      overflow: hidden;
+    }
+    #reader__dashboard_section_csr button {
+      background-color: #2563eb !important;
+      color: white !important;
+      border: none !important;
+      padding: 0.5rem 1rem !important;
+      border-radius: 0.5rem !important;
+      font-weight: 600 !important;
+      cursor: pointer !important;
+      font-size: 0.875rem !important;
+    }
+
+    /* KEYFRAMES FOR ANIMATED ICONS */
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-4px); }
+    }
+    @keyframes swing {
+      0%, 100% { transform: rotate(0deg); }
+      50% { transform: rotate(10deg); }
+    }
+    @keyframes pulse-slow {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.1); opacity: 0.9; }
+    }
+    @keyframes spin-slow {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    @keyframes heartbeat {
+      0%, 100% { transform: scale(1); }
+      25% { transform: scale(1.08); }
+      50% { transform: scale(1); }
+      75% { transform: scale(1.08); }
+    }
+    @keyframes bounce-gentle {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-3px); }
+    }
+
+    /* Looping animation classes */
+    .animate-float { animation: float 3s ease-in-out infinite; }
+    .animate-swing { animation: swing 2s ease-in-out infinite; }
+    .animate-pulse-slow { animation: pulse-slow 2.5s ease-in-out infinite; }
+    .animate-spin-slow { animation: spin-slow 8s linear infinite; }
+    .animate-heartbeat { animation: heartbeat 2s ease-in-out infinite; }
+    .animate-bounce-gentle { animation: bounce-gentle 2s ease-in-out infinite; }
+
+    /* Interactive Hover-triggers for sidebar & tabs */
+    .tab-btn:hover .icon-nav {
+      animation: bounce-gentle 0.8s ease-in-out infinite;
+    }
+    .tab-btn:hover .icon-spin {
+      animation: spin-slow 2s linear infinite;
+    }
+    .tab-btn:hover .icon-pulse {
+      animation: pulse-slow 1s ease-in-out infinite;
+    }
+    .tab-btn:hover .icon-swing {
+      animation: swing 1s ease-in-out infinite;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+  <!-- Top Navigation Bar -->
+  <nav class="bg-blue-800 text-white shadow-md sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        <div class="flex items-center space-x-3">
+          <!-- Animated Mosque Icon (Float) -->
+          <div class="bg-blue-700 p-2 rounded-xl text-blue-100 shadow-inner animate-float">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+            </svg>
+          </div>
+          <div>
+            <span class="font-bold text-lg tracking-wide block">SIM-Presensi</span>
+            <span class="text-blue-200 text-xs block -mt-1">Divisi Ubudiyah Mahasantri</span>
+          </div>
+        </div>
+        
+        <!-- Live Badge Mode Indicator -->
+        <div class="flex items-center space-x-2">
+          <span id="badgeMode" class="px-2.5 py-1 text-xs font-semibold rounded-full bg-amber-500 text-white animate-pulse">
+            Mode Demo
+          </span>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Mobile Bottom Navigation (Tab Bar with Hover Animations) -->
+  <div class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 shadow-lg z-50 flex justify-around py-2">
+    <button onclick="switchTab('dashboard')" class="tab-btn flex flex-col items-center justify-center text-blue-600" id="m-tab-dashboard">
+      <svg class="w-5 h-5 icon-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2v-4zM14 16a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2v-4z"></path></svg>
+      <span class="text-[10px] mt-1 font-medium">Dashboard</span>
+    </button>
+    <button onclick="switchTab('input-presensi')" class="tab-btn flex flex-col items-center justify-center text-slate-400" id="m-tab-input-presensi">
+      <svg class="w-5 h-5 icon-nav" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+      <span class="text-[10px] mt-1 font-medium">Presensi</span>
+    </button>
+    <button onclick="switchTab('rekap-stats')" class="tab-btn flex flex-col items-center justify-center text-slate-400" id="m-tab-rekap-stats">
+      <svg class="w-5 h-5 icon-swing" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2"></path></svg>
+      <span class="text-[10px] mt-1 font-medium">Rekap & Stats</span>
+    </button>
+    <button onclick="switchTab('mahasantri')" class="tab-btn flex flex-col items-center justify-center text-slate-400" id="m-tab-mahasantri">
+      <svg class="w-5 h-5 icon-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+      <span class="text-[10px] mt-1 font-medium">Santri</span>
+    </button>
+    <button onclick="switchTab('pengaturan')" class="tab-btn flex flex-col items-center justify-center text-slate-400" id="m-tab-pengaturan">
+      <svg class="w-5 h-5 icon-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+      <span class="text-[10px] mt-1 font-medium">Setting</span>
+    </button>
+  </div>
+
+  <!-- Main Workspace -->
+  <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-24 md:pb-12 flex flex-col md:flex-row gap-6">
+    
+    <!-- Sidebar for Desktop -->
+    <aside class="hidden md:block w-64 flex-shrink-0">
+      <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm space-y-2 sticky top-24">
+        <p class="text-slate-400 text-xs font-semibold px-3 uppercase tracking-wider mb-3">Menu Ubudiyah</p>
+        
+        <button onclick="switchTab('dashboard')" class="tab-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition text-left font-medium text-blue-600 bg-blue-50/50" id="d-tab-dashboard">
+          <svg class="w-5 h-5 icon-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2H6a2 2 0 01-2-2v-4zM14 16a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2v-4z"></path></svg>
+          <span>Dashboard Analytics</span>
+        </button>
+
+        <button onclick="switchTab('input-presensi')" class="tab-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition text-left font-medium text-slate-600 hover:bg-slate-50" id="d-tab-input-presensi">
+          <svg class="w-5 h-5 icon-nav" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+          <span>Presensi Jamaah</span>
+        </button>
+
+        <button onclick="switchTab('rekap-stats')" class="tab-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition text-left font-medium text-slate-600 hover:bg-slate-50" id="d-tab-rekap-stats">
+          <svg class="w-5 h-5 icon-swing" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2"></path></svg>
+          <span>Rekap & Statistik</span>
+        </button>
+
+        <button onclick="switchTab('mahasantri')" class="tab-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition text-left font-medium text-slate-600 hover:bg-slate-50" id="d-tab-mahasantri">
+          <svg class="w-5 h-5 icon-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+          <span>Data Mahasantri</span>
+        </button>
+
+        <button onclick="switchTab('pengaturan')" class="tab-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition text-left font-medium text-slate-600 hover:bg-slate-50" id="d-tab-pengaturan">
+          <svg class="w-5 h-5 icon-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+          <span>Pengaturan API</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Content Sections Panel -->
+    <section class="flex-grow">
+      
+      <!-- SECTION 1: DASHBOARD ANALYTICS -->
+      <div id="section-dashboard" class="tab-content space-y-6">
+        <!-- Dashboard Welcome Hero -->
+        <div class="bg-gradient-to-r from-blue-700 to-indigo-800 rounded-3xl p-6 text-white shadow-md flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div class="flex items-start space-x-3">
+            <span class="text-3xl animate-float mt-1">🕌</span>
+            <div>
+              <h2 class="text-2xl font-bold tracking-tight">Assalamu'alaikum, Divisi Ubudiyah!</h2>
+              <p class="text-blue-100 text-sm mt-1">Gunakan platform ini untuk mengontrol pencapaian ibadah berjamaah subuh, maghrib, dan isya.</p>
+            </div>
+          </div>
+          <div class="text-blue-50 bg-white/10 px-4 py-2.5 rounded-2xl backdrop-blur-md self-start md:self-auto text-sm font-semibold flex items-center space-x-2">
+            <span class="animate-pulse-slow">📅</span>
+            <span id="currentDateString">Senin, 6 Juli 2026</span>
+          </div>
+        </div>
+
+        <!-- Metric Cards with gentle bouncing icons -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
+            <div class="flex justify-between items-start">
+              <span class="text-slate-400 text-xs font-semibold uppercase tracking-wider">Hadir Hari Ini</span>
+              <span class="text-xl animate-bounce-gentle">📈</span>
+            </div>
+            <div class="flex items-baseline space-x-2 mt-2">
+              <span id="statHadirToday" class="text-3xl font-extrabold text-blue-600">0</span>
+              <span class="text-xs text-slate-500">kali</span>
+            </div>
+            <p class="text-[11px] text-slate-500 mt-2">Total ibadah terhitung</p>
+          </div>
+          <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
+            <div class="flex justify-between items-start">
+              <span class="text-slate-400 text-xs font-semibold uppercase tracking-wider">Total Mahasantri</span>
+              <span class="text-xl animate-float">👥</span>
+            </div>
+            <div class="flex items-baseline space-x-2 mt-2">
+              <span id="statTotalSantri" class="text-3xl font-extrabold text-indigo-600">0</span>
+              <span class="text-xs text-slate-500">orang</span>
+            </div>
+            <p class="text-[11px] text-slate-500 mt-2">Terdaftar di asrama</p>
+          </div>
+          <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
+            <div class="flex justify-between items-start">
+              <span class="text-slate-400 text-xs font-semibold uppercase tracking-wider">Kehadiran (Subuh)</span>
+              <span class="text-xl animate-pulse-slow">🌅</span>
+            </div>
+            <div class="flex items-baseline space-x-2 mt-2">
+              <span id="statSubuhToday" class="text-3xl font-extrabold text-blue-500">0%</span>
+            </div>
+            <p class="text-[11px] text-slate-500 mt-2">Tingkat kehadiran subuh hari ini</p>
+          </div>
+          <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
+            <div class="flex justify-between items-start">
+              <span class="text-slate-400 text-xs font-semibold uppercase tracking-wider">Izin & Sakit (Hari ini)</span>
+              <span class="text-xl animate-swing">📁</span>
+            </div>
+            <div class="flex items-baseline space-x-2 mt-2">
+              <span id="statIzinToday" class="text-3xl font-extrabold text-sky-500">0</span>
+              <span class="text-xs text-slate-500">laporan</span>
+            </div>
+            <p class="text-[11px] text-slate-500 mt-2">Tidak termasuk Alpa</p>
+          </div>
+        </div>
+
+        <!-- Leaderboard & Recent Activities -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          
+          <!-- Leaderboard Discipline -->
+          <div class="lg:col-span-7 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+              <h3 class="font-bold text-slate-800 text-base flex items-center space-x-2">
+                <span class="animate-bounce-gentle">🏆</span>
+                <span>Papan Kedisiplinan Teratas</span>
+              </h3>
+              <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-blue-100 text-blue-800 flex items-center space-x-1">
+                <span class="inline-block w-1.5 h-1.5 rounded-full bg-blue-600 animate-pulse"></span>
+                <span>Bulanan</span>
+              </span>
+            </div>
+            
+            <div id="leaderboardList" class="space-y-3">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+
+          <!-- Quick Statistics Summary -->
+          <div class="lg:col-span-5 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
+            <div>
+              <div class="border-b border-slate-100 pb-3 mb-4 flex justify-between items-center">
+                <h3 class="font-bold text-slate-800 text-base">📊 Statistik Ibadah Shalat</h3>
+                <span class="animate-spin-slow text-lg">⚙️</span>
+              </div>
+              <div class="space-y-4">
+                <div>
+                  <div class="flex justify-between text-xs font-semibold mb-1">
+                    <span class="text-slate-600">Subuh Berjamaah</span>
+                    <span id="barSubuhPercent" class="text-blue-600">0%</span>
+                  </div>
+                  <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                    <div id="barSubuh" class="bg-blue-500 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+                  </div>
+                </div>
+                <div>
+                  <div class="flex justify-between text-xs font-semibold mb-1">
+                    <span class="text-slate-600">Maghrib Berjamaah</span>
+                    <span id="barMaghribPercent" class="text-indigo-600">0%</span>
+                  </div>
+                  <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                    <div id="barMaghrib" class="bg-indigo-500 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+                  </div>
+                </div>
+                <div>
+                  <div class="flex justify-between text-xs font-semibold mb-1">
+                    <span class="text-slate-600">Isya Berjamaah</span>
+                    <span id="barIsyaPercent" class="text-sky-600">0%</span>
+                  </div>
+                  <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                    <div id="barIsya" class="bg-sky-500 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-6 pt-4 border-t border-slate-100 bg-slate-50 -mx-6 -mb-6 p-6 rounded-b-2xl">
+              <h4 class="text-xs font-bold text-slate-600 uppercase tracking-wider mb-2 flex items-center space-x-1">
+                <span class="animate-pulse-slow">ℹ️</span>
+                <span>Info Cepat</span>
+              </h4>
+              <p class="text-xs text-slate-500 leading-relaxed">Persentase di atas dihitung berdasarkan total kehadiran "Hadir" dibanding target kehadiran ideal (3 shalat wajib terjadwal per hari untuk semua mahasantri).</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION 2: INPUT PRESENSI & SCANNER -->
+      <div id="section-input-presensi" class="tab-content hidden space-y-6">
+        <div class="max-w-2xl mx-auto space-y-6">
+          
+          <!-- Tab selector for Input Mode (Manual vs Scan Barcode) -->
+          <div class="bg-white p-2 rounded-2xl border border-slate-200/80 shadow-sm flex">
+            <button onclick="setPresensiMode('manual')" id="btnPresensiManual" class="flex-grow py-3 text-center text-sm font-semibold rounded-xl bg-blue-600 text-white transition flex items-center justify-center space-x-2">
+              <span class="animate-bounce-gentle">✍️</span>
+              <span>Input Manual</span>
+            </button>
+            <button onclick="setPresensiMode('scanner')" id="btnPresensiScanner" class="flex-grow py-3 text-center text-sm font-semibold rounded-xl text-slate-600 hover:bg-slate-50 transition flex items-center justify-center space-x-2">
+              <span class="animate-pulse-slow">📷</span>
+              <span>Scan Barcode / QR</span>
+            </button>
+          </div>
+
+          <!-- VIEW A: MANUAL INPUT -->
+          <div id="viewPresensiManual" class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
+            <div class="border-b border-slate-100 pb-4 mb-6">
+              <h2 class="text-xl font-bold text-slate-800 flex items-center space-x-2">
+                <span class="animate-bounce-gentle">📝</span>
+                <span>Form Catat Presensi Jamaah</span>
+              </h2>
+              <p class="text-xs text-slate-500 mt-1">Masukkan laporan kehadiran shalat jamaah mahasantri oleh Divisi Ubudiyah secara teliti.</p>
+            </div>
+
+            <form id="attendanceForm" class="space-y-6">
+              <!-- Select Mahasantri -->
+              <div>
+                <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Pilih Mahasantri</label>
+                <div class="relative">
+                  <select id="santriSelect" class="w-full p-3.5 pl-4 pr-10 border border-slate-200 bg-slate-50/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm font-medium appearance-none" required>
+                    <option value="">-- Pilih Mahasantri --</option>
+                  </select>
+                  <div class="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none text-slate-400">
+                    <svg class="w-4 h-4 icon-swing" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Choose Prayer Time (Visual Cards) -->
+              <div>
+                <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Waktu Shalat</label>
+                <div class="grid grid-cols-3 gap-3">
+                  <label class="cursor-pointer relative flex flex-col items-center justify-center p-4 border-2 rounded-2xl transition hover:bg-slate-50" id="waktu-card-Subuh">
+                    <input type="radio" name="waktuShalat" value="Subuh" checked class="sr-only" onchange="updateWaktuSelection('Subuh')">
+                    <span class="text-xl mb-1 animate-pulse-slow">🌅</span>
+                    <span class="text-xs font-bold text-slate-700">Subuh</span>
+                  </label>
+                  <label class="cursor-pointer relative flex flex-col items-center justify-center p-4 border-2 rounded-2xl transition hover:bg-slate-50" id="waktu-card-Maghrib">
+                    <input type="radio" name="waktuShalat" value="Maghrib" class="sr-only" onchange="updateWaktuSelection('Maghrib')">
+                    <span class="text-xl mb-1 animate-float">🌇</span>
+                    <span class="text-xs font-bold text-slate-700">Maghrib</span>
+                  </label>
+                  <label class="cursor-pointer relative flex flex-col items-center justify-center p-4 border-2 rounded-2xl transition hover:bg-slate-50" id="waktu-card-Isya">
+                    <input type="radio" name="waktuShalat" value="Isya" class="sr-only" onchange="updateWaktuSelection('Isya')">
+                    <span class="text-xl mb-1 animate-swing">🌃</span>
+                    <span class="text-xs font-bold text-slate-700">Isya</span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Choose Attendance Status (Visual Cards) -->
+              <div>
+                <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Status Kehadiran</label>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <label class="cursor-pointer relative flex flex-col items-center justify-center p-4 border-2 rounded-2xl transition hover:bg-blue-50/50" id="status-card-Hadir">
+                    <input type="radio" name="status" value="Hadir" checked class="sr-only" onchange="updateStatusSelection('Hadir')">
+                    <span class="w-2.5 h-2.5 rounded-full bg-blue-500 mb-2 animate-pulse-slow"></span>
+                    <span class="text-xs font-bold text-slate-700">Hadir</span>
+                  </label>
+                  <label class="cursor-pointer relative flex flex-col items-center justify-center p-4 border-2 rounded-2xl transition hover:bg-amber-50/50" id="status-card-Sakit">
+                    <input type="radio" name="status" value="Sakit" class="sr-only" onchange="updateStatusSelection('Sakit')">
+                    <span class="w-2.5 h-2.5 rounded-full bg-amber-500 mb-2"></span>
+                    <span class="text-xs font-bold text-slate-700">Sakit</span>
+                  </label>
+                  <label class="cursor-pointer relative flex flex-col items-center justify-center p-4 border-2 rounded-2xl transition hover:bg-sky-50/50" id="status-card-Izin">
+                    <input type="radio" name="status" value="Izin" class="sr-only" onchange="updateStatusSelection('Izin')">
+                    <span class="w-2.5 h-2.5 rounded-full bg-sky-500 mb-2"></span>
+                    <span class="text-xs font-bold text-slate-700">Izin</span>
+                  </label>
+                  <label class="cursor-pointer relative flex flex-col items-center justify-center p-4 border-2 rounded-2xl transition hover:bg-rose-50/50" id="status-card-Alpa">
+                    <input type="radio" name="status" value="Alpa" class="sr-only" onchange="updateStatusSelection('Alpa')">
+                    <span class="w-2.5 h-2.5 rounded-full bg-rose-500 mb-2 animate-bounce-gentle"></span>
+                    <span class="text-xs font-bold text-slate-700">Alpa</span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Submit Button -->
+              <button type="button" onclick="submitNewAbsensi()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3.5 px-4 rounded-xl transition shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 flex items-center justify-center space-x-2 cursor-pointer">
+                <span class="animate-bounce-gentle">💾</span>
+                <span>Simpan Presensi</span>
+              </button>
+            </form>
+          </div>
+
+          <!-- VIEW B: BARCODE / QR SCANNER -->
+          <div id="viewPresensiScanner" class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm hidden space-y-6">
+            <div class="border-b border-slate-100 pb-4 flex flex-col sm:flex-row justify-between sm:items-center gap-2">
+              <div>
+                <h2 class="text-xl font-bold text-slate-800 flex items-center space-x-2">
+                  <span class="animate-pulse-slow">📷</span>
+                  <span>Scan Kartu Mahasantri</span>
+                </h2>
+                <p class="text-xs text-slate-500 mt-1">Gunakan Kamera HP / Laptop Divisi Ubudiyah Anda untuk memindai Barcode atau QR Code.</p>
+              </div>
+              
+              <!-- Smart Prayer Time Watcher -->
+              <div class="bg-blue-50 text-blue-800 px-3 py-1.5 rounded-xl text-xs font-bold flex items-center space-x-1 w-fit">
+                <span class="animate-spin-slow">🕒</span>
+                <span>Auto Shalat:</span>
+                <span id="autoDetectedPrayerText" class="uppercase">Subuh</span>
+              </div>
+            </div>
+
+            <!-- Instant Mode Config -->
+            <div class="p-4 bg-slate-50 border border-slate-100 rounded-2xl flex items-center justify-between">
+              <div>
+                <p class="text-xs font-bold text-slate-700 flex items-center space-x-1.5">
+                  <span class="animate-heartbeat">⚡</span>
+                  <span>Mode Instant (Scan langsung Hadir)</span>
+                </p>
+                <p class="text-[10px] text-slate-400">Secara otomatis mengabsen "Hadir" pada waktu shalat saat ini tanpa tombol konfirmasi.</p>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" id="scannerInstantMode" checked class="sr-only peer">
+                <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+              </label>
+            </div>
+
+            <!-- Scanner Viewport Frame -->
+            <div class="relative bg-slate-900 rounded-3xl overflow-hidden shadow-inner aspect-[4/3] max-w-md mx-auto flex flex-col justify-center">
+              <div id="reader" class="w-full"></div>
+              <div id="scannerOverlayMessage" class="absolute bottom-4 left-4 right-4 bg-slate-900/80 backdrop-blur-md py-2 px-3 rounded-xl text-center text-xs text-white">
+                Dekatkan Barcode/QR Code santri ke area tangkapan kamera
+              </div>
+            </div>
+
+            <!-- Camera Permission & Control Actions -->
+            <div class="flex justify-center gap-3">
+              <button onclick="startScanning()" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs rounded-xl transition flex items-center space-x-2 shadow-sm cursor-pointer">
+                <span class="animate-pulse-slow">📹</span>
+                <span>Nyalakan Kamera</span>
+              </button>
+              <button onclick="stopScanning()" class="px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-xl transition flex items-center space-x-2 cursor-pointer">
+                <span class="animate-spin-slow">🛑</span>
+                <span>Matikan</span>
+              </button>
+            </div>
+
+            <!-- Last Scanned Results Panel -->
+            <div class="p-4 bg-blue-50/50 border border-blue-100 rounded-2xl">
+              <p class="text-xs font-bold text-blue-800 uppercase tracking-wider mb-2 flex items-center space-x-1">
+                <span class="animate-float">📋</span>
+                <span>Hasil Pemindaian Terakhir:</span>
+              </p>
+              <div id="lastScannedLog" class="text-xs text-slate-600 italic">
+                Belum ada aktivitas scan terdeteksi. Silakan nyalakan kamera.
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- SECTION 3: REKAP & STATISTIK -->
+      <div id="section-rekap-stats" class="tab-content hidden space-y-6">
+        <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
+          
+          <!-- Filters & Header Row -->
+          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-100 pb-5 mb-5">
+            <div>
+              <h2 class="text-xl font-bold text-slate-800 flex items-center space-x-2">
+                <span class="animate-float">📈</span>
+                <span>Rekapitulasi Kehadiran Jamaah</span>
+              </h2>
+              <p class="text-xs text-slate-500 mt-1">Laporan kedisiplinan kumulatif Mingguan & Bulanan untuk setiap mahasantri.</p>
+            </div>
+            
+            <div class="flex flex-wrap items-center gap-2">
+              <input type="text" id="rekapSearch" placeholder="Cari nama santri..." oninput="filterRekapTable()" class="p-2 border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-48 bg-slate-50/50">
+              
+              <button onclick="refreshData()" class="px-3.5 py-2 text-xs font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition flex items-center space-x-1 cursor-pointer">
+                <span class="animate-spin-slow">🔄</span>
+                <span>Segarkan</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Recap Statistics Table -->
+          <div class="overflow-x-auto -mx-6 px-6">
+            <table class="w-full border-collapse text-sm text-left">
+              <thead>
+                <tr class="bg-slate-50 text-slate-500 font-bold border-b border-slate-200">
+                  <th class="p-4" rowspan="2">Nama Mahasantri</th>
+                  <th class="p-4 text-center border-b border-slate-100" colspan="4">Mingguan (7 Hari Terakhir)</th>
+                  <th class="p-4 text-center border-b border-slate-100" colspan="4">Bulanan (30 Hari Terakhir)</th>
+                </tr>
+                <tr class="bg-slate-50/50 text-slate-400 text-[11px] font-bold border-b border-slate-200">
+                  <th class="p-2 text-center">Subuh</th>
+                  <th class="p-2 text-center">Maghrib</th>
+                  <th class="p-2 text-center">Isya</th>
+                  <th class="p-2 text-center bg-blue-50/60 text-blue-700 font-extrabold rounded-md">Total</th>
+                  <th class="p-2 text-center">Subuh</th>
+                  <th class="p-2 text-center">Maghrib</th>
+                  <th class="p-2 text-center">Isya</th>
+                  <th class="p-2 text-center bg-blue-50/60 text-blue-700 font-extrabold rounded-md">Total</th>
+                </tr>
+              </thead>
+              <tbody id="rekapTableBody" class="divide-y divide-slate-100 text-slate-700">
+                <!-- Dynamically Populated -->
+              </tbody>
+            </table>
+          </div>
+          
+          <div class="mt-4 pt-4 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <p class="text-xs text-slate-400">💡 Tip: Klik pada baris nama mahasantri untuk melihat detail grafik statistik personal.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION 4: DATA MAHASANTRI -->
+      <div id="section-mahasantri" class="tab-content hidden space-y-6">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          
+          <!-- Add Mahasantri Form -->
+          <div class="lg:col-span-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm h-fit">
+            <h3 class="font-bold text-slate-800 text-lg border-b border-slate-100 pb-3 mb-4 flex items-center space-x-2">
+              <span class="animate-bounce-gentle">＋</span>
+              <span>Tambah Mahasantri</span>
+            </h3>
+            <form id="mahasantriForm" class="space-y-4" onsubmit="event.preventDefault(); addNewMahasantri();">
+              <div>
+                <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">ID Mahasantri (Unik)</label>
+                <input type="text" id="newSantriId" placeholder="Contoh: S005" required class="w-full p-3 border border-slate-200 bg-slate-50/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">Nama Lengkap</label>
+                <input type="text" id="newSantriNama" placeholder="Nama Mahasantri" required class="w-full p-3 border border-slate-200 bg-slate-50/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+              </div>
+              <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-xl transition shadow-sm cursor-pointer flex items-center justify-center space-x-2">
+                <span class="animate-pulse-slow">💾</span>
+                <span>Simpan Mahasantri</span>
+              </button>
+            </form>
+          </div>
+
+          <!-- Mahasantri List -->
+          <div class="lg:col-span-8 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
+            <h3 class="font-bold text-slate-800 text-lg border-b border-slate-100 pb-3 mb-4 flex items-center justify-between">
+              <span class="flex items-center space-x-2">
+                <span class="animate-float">📋</span>
+                <span>Daftar Mahasantri Aktif</span>
+              </span>
+              <span id="totalSantriCountBadge" class="text-xs bg-slate-100 text-slate-600 px-3 py-1 rounded-full font-medium flex items-center space-x-1">
+                <span class="inline-block w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>
+                <span>0 Orang</span>
+              </span>
+            </h3>
+            
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm text-left">
+                <thead>
+                  <tr class="bg-slate-50 text-slate-400 font-bold text-xs uppercase border-b border-slate-100">
+                    <th class="p-3">ID</th>
+                    <th class="p-3">Nama Lengkap</th>
+                    <th class="p-3 text-right">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody id="santriTableBody" class="divide-y divide-slate-100 text-slate-700">
+                  <!-- Dynamically Populated -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION 5: PENGATURAN API -->
+      <div id="section-pengaturan" class="tab-content hidden space-y-6">
+        <div class="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm max-w-2xl mx-auto">
+          <div class="border-b border-slate-100 pb-4 mb-6">
+            <h2 class="text-xl font-bold text-slate-800 flex items-center space-x-2">
+              <span class="animate-spin-slow">⚙️</span>
+              <span>Pengaturan Koneksi API Database</span>
+            </h2>
+            <p class="text-xs text-slate-500 mt-1">Hubungkan UI Frontend Anda di GitHub ini dengan Database Google Sheets Anda.</p>
+          </div>
+
+          <div class="space-y-6">
+            <!-- Connection Mode Selector -->
+            <div>
+              <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Mode Penyimpanan</label>
+              <div class="grid grid-cols-2 gap-3">
+                <button onclick="setAppMode('local')" id="btnModeLocal" class="p-4 border-2 border-blue-600 bg-blue-50/20 rounded-2xl font-semibold text-sm transition text-center text-slate-800 flex flex-col items-center justify-center space-y-1 cursor-pointer">
+                  <span class="text-xl animate-float">💽</span>
+                  <span>Demo / Local Storage</span>
+                  <span class="text-[10px] text-slate-400 font-normal">Data disimpan di browser saat ini</span>
+                </button>
+                <button onclick="setAppMode('live')" id="btnModeLive" class="p-4 border-2 border-slate-200 rounded-2xl font-semibold text-sm transition text-center text-slate-800 flex flex-col items-center justify-center space-y-1 cursor-pointer">
+                  <span class="text-xl animate-pulse-slow">☁️</span>
+                  <span>Google Sheets API</span>
+                  <span class="text-[10px] text-slate-400 font-normal">Hubungkan ke database online</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- API URL Input -->
+            <div id="apiUrlContainer" class="hidden">
+              <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">Google Web App URL (REST API)</label>
+              <div class="flex gap-2">
+                <input type="password" id="inputApiUrl" placeholder="https://script.google.com/macros/s/.../exec" class="flex-grow p-3 border border-slate-200 bg-slate-50/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                <button onclick="togglePasswordVisibility('inputApiUrl')" class="px-3 border border-slate-200 rounded-xl bg-slate-50 hover:bg-slate-100 text-sm text-slate-500">
+                  👁️
+                </button>
+              </div>
+              <p class="text-[11px] text-slate-400 mt-1.5">Pastikan Anda telah menyetel deployment dengan akses "Anyone" pada Google Apps Script.</p>
+              
+              <button onclick="testApiConnection()" class="mt-4 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-xl transition inline-flex items-center space-x-1.5 cursor-pointer">
+                <span class="animate-heartbeat">⚡</span>
+                <span>Hubungkan & Uji Koneksi</span>
+              </button>
+            </div>
+
+            <!-- Guide / Tutorial Accordion -->
+            <div class="bg-slate-50 p-5 rounded-2xl border border-slate-100">
+              <h4 class="font-bold text-slate-800 text-sm mb-3 flex items-center space-x-1.5">
+                <span class="animate-float">📖</span>
+                <span>Panduan Singkat Integrasi Google Sheets oleh Divisi Ubudiyah:</span>
+              </h4>
+              <ol class="list-decimal list-inside text-xs text-slate-500 space-y-2 leading-relaxed">
+                <li>Buka Google Spreadsheet baru Anda.</li>
+                <li>Buat tab <code class="bg-white px-1.5 py-0.5 rounded border font-semibold text-slate-700">Mahasantri</code> dan tab <code class="bg-white px-1.5 py-0.5 rounded border font-semibold text-slate-700">Absensi</code>.</li>
+                <li>Masuk ke <strong class="text-slate-700">Extensions > Apps Script</strong>, tempel kode <code class="font-mono bg-white px-1 py-0.5 rounded border">Kode.gs</code>.</li>
+                <li>Klik tombol <strong class="text-slate-700">Deploy > New Deployment</strong>.</li>
+                <li>Pilih tipe <strong class="text-slate-700">Web App</strong>, ubah Execute As ke <strong class="text-slate-700">Me</strong> dan Who Has Access ke <strong class="text-slate-700">Anyone</strong>.</li>
+                <li>Salin link Web App yang Anda dapatkan lalu tempelkan pada input URL di atas.</li>
+              </ol>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </section>
+  </main>
+
+  <!-- MODAL: INDIVIDUAL STATS RAPOR -->
+  <div id="statsModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white w-full max-w-lg rounded-3xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+      
+      <!-- Modal Header -->
+      <div class="bg-gradient-to-r from-blue-700 to-indigo-800 p-6 text-white flex justify-between items-start">
+        <div>
+          <span class="text-xs font-semibold px-2 py-0.5 rounded bg-white/20 uppercase tracking-widest text-blue-100">Rapor Presensi</span>
+          <h3 id="modalStudentName" class="text-xl font-bold mt-1">Nama Mahasantri</h3>
+          <p id="modalStudentId" class="text-xs text-blue-100">ID: -</p>
+        </div>
+        <button onclick="closeStatsModal()" class="text-white hover:bg-white/10 p-2 rounded-xl transition">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="p-6 space-y-6">
+        <!-- 7 Days Summary vs 30 Days Summary -->
+        <div class="grid grid-cols-2 gap-4 text-center">
+          <div class="p-4 bg-slate-50 border border-slate-100 rounded-2xl">
+            <span class="text-xs text-slate-400 font-semibold block flex items-center justify-center space-x-1">
+              <span class="animate-bounce-gentle">📅</span>
+              <span>Skor Mingguan (7 Hari)</span>
+            </span>
+            <span id="modalWeeklyScore" class="text-2xl font-extrabold text-blue-600 block mt-1">0%</span>
+            <span id="modalWeeklyCounts" class="text-[10px] text-slate-500 mt-1 block">0/21 Kehadiran</span>
+          </div>
+          <div class="p-4 bg-slate-50 border border-slate-100 rounded-2xl">
+            <span class="text-xs text-slate-400 font-semibold block flex items-center justify-center space-x-1">
+              <span class="animate-pulse-slow">📊</span>
+              <span>Skor Bulanan (30 Hari)</span>
+            </span>
+            <span id="modalMonthlyScore" class="text-2xl font-extrabold text-indigo-600 block mt-1">0%</span>
+            <span id="modalMonthlyCounts" class="text-[10px] text-slate-500 mt-1 block">0/90 Kehadiran</span>
+          </div>
+        </div>
+
+        <!-- Shalat Breakdown Bulanan -->
+        <div>
+          <h4 class="font-bold text-slate-800 text-sm mb-3">Statistik Detail Bulanan Shalat Wajib</h4>
+          <div class="space-y-4">
+            <div>
+              <div class="flex justify-between text-xs font-semibold text-slate-600 mb-1">
+                <span class="flex items-center space-x-1">
+                  <span class="animate-pulse-slow">🌅</span>
+                  <span>Shalat Subuh</span>
+                </span>
+                <span id="modalBreakdownSubuhPercent">0%</span>
+              </div>
+              <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                <div id="modalBreakdownSubuh" class="bg-blue-500 h-full rounded-full" style="width: 0%"></div>
+              </div>
+            </div>
+            <div>
+              <div class="flex justify-between text-xs font-semibold text-slate-600 mb-1">
+                <span class="flex items-center space-x-1">
+                  <span class="animate-float">🌇</span>
+                  <span>Shalat Maghrib</span>
+                </span>
+                <span id="modalBreakdownMaghribPercent">0%</span>
+              </div>
+              <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                <div id="modalBreakdownMaghrib" class="bg-indigo-500 h-full rounded-full" style="width: 0%"></div>
+              </div>
+            </div>
+            <div>
+              <div class="flex justify-between text-xs font-semibold text-slate-600 mb-1">
+                <span class="flex items-center space-x-1">
+                  <span class="animate-swing">🌃</span>
+                  <span>Shalat Isya</span>
+                </span>
+                <span id="modalBreakdownIsyaPercent">0%</span>
+              </div>
+              <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                <div id="modalBreakdownIsya" class="bg-sky-500 h-full rounded-full" style="width: 0%"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="bg-slate-50 px-6 py-4 flex justify-end">
+        <button onclick="closeStatsModal()" class="px-5 py-2.5 bg-slate-200 hover:bg-slate-300 rounded-xl text-slate-700 text-sm font-semibold transition cursor-pointer">
+          Tutup Rapor
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CUSTOM CONFIRMATION DIALOG (Replacer for confirm()) -->
+  <div id="confirmDialog" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white w-full max-w-sm rounded-3xl shadow-xl p-6 space-y-4 overflow-hidden transform transition duration-200">
+      <div class="text-center">
+        <span class="text-3xl animate-bounce-gentle inline-block">⚠️</span>
+        <h3 id="confirmTitle" class="text-lg font-bold text-slate-800 mt-2">Konfirmasi Tindakan</h3>
+        <p id="confirmMessage" class="text-xs text-slate-500 mt-1">Apakah Anda yakin ingin melakukan tindakan ini?</p>
+      </div>
+      <div class="flex gap-3 pt-2">
+        <button id="btnConfirmCancel" class="flex-grow py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-xl transition cursor-pointer">Batal</button>
+        <button id="btnConfirmProceed" class="flex-grow py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs rounded-xl transition shadow-sm cursor-pointer">Lanjutkan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Custom Notification Toast -->
+  <div id="toast" class="fixed bottom-6 right-6 z-50 max-w-sm w-full bg-slate-900 text-white rounded-2xl shadow-xl p-4 flex items-center space-x-3 transition duration-300 transform translate-y-24 opacity-0">
+    <div id="toastIcon" class="bg-blue-500 p-1.5 rounded-lg text-white text-sm animate-pulse">
+      ✅
+    </div>
+    <div class="flex-grow">
+      <p id="toastMessage" class="text-sm font-medium">Notifikasi berhasil ditampilkan.</p>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT BUSINESS LOGIC -->
+  <script>
+    // ================== KONFIGURASI API UTAMA ==================
+    // Tempelkan URL Web App Google Apps Script Anda di bawah ini agar terhubung secara otomatis di GitHub Pages:
+    const DEFAULT_API_URL = "https://script.google.com/macros/s/AKfycbyHI4XjP4C7vKp-ZVtQXV2XAGB9aqmCuJSceZ8Tu88gA32VK_ZPDrAGIR9a4eRHnoLY/exec"; 
+
+    // ================== MOCK DATA (Untuk Mode Demo Instan) ==================
+    const defaultMahasantri = [
+      { id: "S001", nama: "Muhammad Fatih Al-Haddad" },
+      { id: "S002", nama: "Ahmad Fauzan Al-Banjari" },
+      { id: "S003", nama: "Ali Ridho El-Maliki" },
+      { id: "S004", nama: "Zubair bin Awwam" }
+    ];
+
+    // Buat data absensi fiktif 30 hari terakhir agar statistik langsung terisi penuh pada preview
+    function generateMockAbsensi() {
+      const absensi = [];
+      const prayers = ["Subuh", "Maghrib", "Isya"];
+      const statuses = ["Hadir", "Hadir", "Hadir", "Hadir", "Sakit", "Izin", "Alpa"]; // Bobot lebih banyak Hadir
+      const now = new Date();
+
+      for (let i = 0; i < 30; i++) {
+        const currentDate = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+        const tglStr = currentDate.toISOString().split('T')[0];
+
+        defaultMahasantri.forEach(santri => {
+          prayers.forEach(waktu => {
+            // Berikan status random berbobot
+            const randIdx = Math.floor(Math.random() * statuses.length);
+            const status = statuses[randIdx];
+
+            absensi.push({
+              timestamp: currentDate.toISOString(),
+              tanggal: tglStr,
+              id: santri.id,
+              nama: santri.nama,
+              waktuShalat: waktu,
+              status: status
+            });
+          });
+        });
+      }
+      return absensi;
+    }
+
+    // Initialize State
+    let state = {
+      mode: "local", // "local" atau "live"
+      apiUrl: "",
+      mahasantri: [],
+      absensi: []
+    };
+
+    let html5QrcodeScanner = null;
+
+    // Load Local Data (jika ada di local storage)
+    function loadState() {
+      const savedMode = localStorage.getItem("sim_mode");
+      const savedApiUrl = localStorage.getItem("sim_api_url");
+      const savedSantri = localStorage.getItem("sim_mahasantri");
+      const savedAbsensi = localStorage.getItem("sim_absensi");
+
+      // Mengutamakan DEFAULT_API_URL jika tidak ada sim_api_url di localStorage
+      state.apiUrl = savedApiUrl || DEFAULT_API_URL;
+      state.mode = savedMode || (state.apiUrl ? "live" : "local");
+      state.mahasantri = savedSantri ? JSON.parse(savedSantri) : [...defaultMahasantri];
+      state.absensi = savedAbsensi ? JSON.parse(savedAbsensi) : generateMockAbsensi();
+
+      // Sinkronkan UI ke pengaturan tersimpan
+      document.getElementById("inputApiUrl").value = state.apiUrl;
+      updateModeUI();
+    }
+
+    function saveState() {
+      localStorage.setItem("sim_mode", state.mode);
+      localStorage.setItem("sim_api_url", state.apiUrl);
+      localStorage.setItem("sim_mahasantri", JSON.stringify(state.mahasantri));
+      localStorage.setItem("sim_absensi", JSON.stringify(state.absensi));
+    }
+
+    // ================== CORE NAVIGATION ==================
+    function switchTab(tabId) {
+      // Sembunyikan semua tab-content
+      document.querySelectorAll(".tab-content").forEach(el => el.classList.add("hidden"));
+      // Tampilkan tab yang dipilih
+      document.getElementById("section-" + tabId).classList.remove("hidden");
+
+      // Reset warna tab buttons di desktop & mobile
+      document.querySelectorAll(".tab-btn").forEach(btn => {
+        btn.classList.remove("text-blue-600", "bg-blue-50/50");
+        btn.classList.add("text-slate-600", "hover:bg-slate-50");
+      });
+      document.querySelectorAll("[id$='tab-" + tabId + "']").forEach(btn => {
+        btn.classList.remove("text-slate-600", "hover:bg-slate-50");
+        btn.classList.add("text-blue-600");
+        if (btn.id.startsWith("d-")) {
+          btn.classList.add("bg-blue-50/50");
+        }
+      });
+
+      // Stop scanning if user switches away from presensi tab
+      if (tabId !== 'input-presensi') {
+        stopScanning();
+      }
+    }
+
+    // Toggle Input Presensi Mode: Manual vs Scanner
+    function setPresensiMode(mode) {
+      const btnManual = document.getElementById("btnPresensiManual");
+      const btnScanner = document.getElementById("btnPresensiScanner");
+      const viewManual = document.getElementById("viewPresensiManual");
+      const viewScanner = document.getElementById("viewPresensiScanner");
+
+      if (mode === 'manual') {
+        btnManual.className = "flex-grow py-3 text-center text-sm font-semibold rounded-xl bg-blue-600 text-white transition flex items-center justify-center space-x-2 cursor-pointer";
+        btnScanner.className = "flex-grow py-3 text-center text-sm font-semibold rounded-xl text-slate-600 hover:bg-slate-50 transition flex items-center justify-center space-x-2 cursor-pointer";
+        viewManual.classList.remove("hidden");
+        viewScanner.classList.add("hidden");
+        stopScanning();
+      } else {
+        btnScanner.className = "flex-grow py-3 text-center text-sm font-semibold rounded-xl bg-blue-600 text-white transition flex items-center justify-center space-x-2 cursor-pointer";
+        btnManual.className = "flex-grow py-3 text-center text-sm font-semibold rounded-xl text-slate-600 hover:bg-slate-50 transition flex items-center justify-center space-x-2 cursor-pointer";
+        viewScanner.classList.remove("hidden");
+        viewManual.classList.add("hidden");
+        autoDetectActivePrayer();
+      }
+    }
+
+    // Update password view toggle
+    function togglePasswordVisibility(id) {
+      const el = document.getElementById(id);
+      el.type = el.type === "password" ? "text" : "password";
+    }
+
+    // Toggle Mode Penyimpanan
+    function setAppMode(mode) {
+      state.mode = mode;
+      saveState();
+      updateModeUI();
+      showToast(mode === 'local' ? "Beralih ke Mode Demo (Simulasi)" : "Beralih ke Mode Google Sheets API", "ℹ️");
+      refreshData();
+    }
+
+    function updateModeUI() {
+      const badge = document.getElementById("badgeMode");
+      const btnLocal = document.getElementById("btnModeLocal");
+      const btnLive = document.getElementById("btnModeLive");
+      const apiContainer = document.getElementById("apiUrlContainer");
+
+      if (state.mode === "local") {
+        badge.textContent = "Mode Demo (Lokal)";
+        badge.className = "px-2.5 py-1 text-xs font-semibold rounded-full bg-amber-500 text-white animate-pulse";
+        btnLocal.className = "p-4 border-2 border-blue-600 bg-blue-50/20 rounded-2xl font-semibold text-sm transition text-center text-slate-800 flex flex-col items-center justify-center space-y-1 cursor-pointer";
+        btnLive.className = "p-4 border-2 border-slate-200 hover:border-slate-300 rounded-2xl font-semibold text-sm transition text-center text-slate-800 flex flex-col items-center justify-center space-y-1 cursor-pointer";
+        apiContainer.classList.add("hidden");
+      } else {
+        badge.textContent = "Mode Live (Google Sheet)";
+        badge.className = "px-2.5 py-1 text-xs font-semibold rounded-full bg-blue-600 text-white animate-pulse";
+        btnLive.className = "p-4 border-2 border-blue-600 bg-blue-50/20 rounded-2xl font-semibold text-sm transition text-center text-slate-800 flex flex-col items-center justify-center space-y-1 cursor-pointer";
+        btnLocal.className = "p-4 border-2 border-slate-200 hover:border-slate-300 rounded-2xl font-semibold text-sm transition text-center text-slate-800 flex flex-col items-center justify-center space-y-1 cursor-pointer";
+        apiContainer.classList.remove("hidden");
+      }
+    }
+
+    // ================== TOAST NOTIFICATION ==================
+    function showToast(message, emoji = "✅") {
+      const toast = document.getElementById("toast");
+      const msg = document.getElementById("toastMessage");
+      const icon = document.getElementById("toastIcon");
+
+      msg.textContent = message;
+      icon.textContent = emoji;
+
+      toast.classList.remove("translate-y-24", "opacity-0");
+      toast.classList.add("translate-y-0", "opacity-100");
+
+      setTimeout(() => {
+        toast.classList.remove("translate-y-0", "opacity-100");
+        toast.classList.add("translate-y-24", "opacity-0");
+      }, 3500);
+    }
+
+    // ================== CUSTOM CONFIRM DIALOG BOX ==================
+    function showConfirmDialog(title, message, onProceed) {
+      const dialog = document.getElementById("confirmDialog");
+      document.getElementById("confirmTitle").textContent = title;
+      document.getElementById("confirmMessage").textContent = message;
+
+      dialog.classList.remove("hidden");
+
+      const cleanup = () => {
+        dialog.classList.add("hidden");
+        btnProceed.removeEventListener("click", proceedHandler);
+        btnCancel.removeEventListener("click", cancelHandler);
+      };
+
+      const proceedHandler = () => {
+        onProceed();
+        cleanup();
+      };
+
+      const cancelHandler = () => {
+        cleanup();
+      };
+
+      const btnProceed = document.getElementById("btnConfirmProceed");
+      const btnCancel = document.getElementById("btnConfirmCancel");
+
+      btnProceed.addEventListener("click", proceedHandler);
+      btnCancel.addEventListener("click", cancelHandler);
+    }
+
+    // ================== PREPARE UI CARD FORMS ==================
+    let selectedWaktu = "Subuh";
+    let selectedStatus = "Hadir";
+
+    function updateWaktuSelection(val) {
+      selectedWaktu = val;
+      const arr = ["Subuh", "Maghrib", "Isya"];
+      arr.forEach(w => {
+        const el = document.getElementById("waktu-card-" + w);
+        if (w === val) {
+          el.className = "cursor-pointer relative flex flex-col items-center justify-center p-4 border-2 border-blue-500 bg-blue-50/20 rounded-2xl transition shadow-inner";
+        } else {
+          el.className = "cursor-pointer relative flex flex-col items-center justify-center p-4 border-2 border-slate-200 rounded-2xl transition hover:bg-slate-50";
+        }
+      });
+    }
+
+    function updateStatusSelection(val) {
+      selectedStatus = val;
+      const statuses = ["Hadir", "Sakit", "Izin", "Alpa"];
+      const colors = {
+        Hadir: "border-blue-500 bg-blue-50/20",
+        Sakit: "border-amber-500 bg-amber-50/20",
+        Izin: "border-sky-500 bg-sky-50/20",
+        Alpa: "border-rose-500 bg-rose-50/20"
+      };
+
+      statuses.forEach(s => {
+        const el = document.getElementById("status-card-" + s);
+        if (s === val) {
+          el.className = `cursor-pointer relative flex flex-col items-center justify-center p-4 border-2 ${colors[s]} rounded-2xl transition shadow-inner`;
+        } else {
+          el.className = "cursor-pointer relative flex flex-col items-center justify-center p-4 border-2 border-slate-200 rounded-2xl transition hover:bg-slate-50";
+        }
+      });
+    }
+
+    // ================== WEB AUDIO BEEP GENERATOR (No file dependency) ==================
+    function playBeepSuccess() {
+      try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        const ctx = new AudioContext();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(1000, ctx.currentTime); // 1KHz pitch
+        gain.gain.setValueAtTime(0.15, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15); // fade out
+
+        osc.start();
+        osc.stop(ctx.currentTime + 0.15);
+      } catch (err) {
+        console.warn("Konteks Audio diblokir atau tidak didukung di peramban ini:", err);
+      }
+    }
+
+    // Auto-detect active prayer based on current system hours
+    let activePrayerTime = "Subuh";
+    function autoDetectActivePrayer() {
+      const hour = new Date().getHours();
+      
+      // Pembagian Alami Jam Ibadah Jamaah
+      if (hour >= 4 && hour < 10) {
+        activePrayerTime = "Subuh";
+      } else if (hour >= 17 && hour < 19) {
+        activePrayerTime = "Maghrib";
+      } else if (hour >= 19 || hour < 4) {
+        activePrayerTime = "Isya";
+      } else {
+        activePrayerTime = "Subuh"; // Default fallback siang hari
+      }
+
+      document.getElementById("autoDetectedPrayerText").textContent = activePrayerTime;
+    }
+
+    // ================== BARCODE / QR SCANNER ACTION ENGINE ==================
+    function startScanning() {
+      // Pastikan scanner dihentikan terlebih dahulu jika ada
+      stopScanning();
+      
+      autoDetectActivePrayer();
+
+      // Buat container scanner bersih
+      const container = document.getElementById("reader");
+      container.innerHTML = "";
+
+      // Inisialisasi library
+      html5QrcodeScanner = new Html5Qrcode("reader");
+      
+      const config = { 
+        fps: 10, 
+        qrbox: { width: 250, height: 250 },
+        aspectRatio: 1.333333
+      };
+
+      document.getElementById("scannerOverlayMessage").textContent = "Mengakses Kamera...";
+
+      html5QrcodeScanner.start(
+        { facingMode: "environment" }, // Prioritas Kamera belakang HP
+        config,
+        onScanSuccess,
+        onScanFailure
+      ).then(() => {
+        document.getElementById("scannerOverlayMessage").textContent = "Siap memindai kartu barcode / QR code!";
+      }).catch(err => {
+        console.error(err);
+        document.getElementById("scannerOverlayMessage").textContent = "Gagal mengakses kamera. Berikan izin akses.";
+        showToast("Gagal menyalakan kamera. Harap izinkan akses kamera Anda.", "❌");
+      });
+    }
+
+    function stopScanning() {
+      if (html5QrcodeScanner) {
+        html5QrcodeScanner.stop().then(() => {
+          html5QrcodeScanner = null;
+          document.getElementById("reader").innerHTML = "";
+          document.getElementById("scannerOverlayMessage").textContent = "Kamera dimatikan.";
+        }).catch(err => {
+          console.warn("Gagal stop scanner secara aman:", err);
+        });
+      }
+    }
+
+    // Callback Sukses Memindai Barcode/QR
+    function onScanSuccess(decodedText, decodedResult) {
+      // Mainkan suara beep sukses instan
+      playBeepSuccess();
+
+      const santriId = decodedText.trim();
+      
+      // Cari data mahasiswa berdasarkan ID hasil scan
+      const foundSantri = state.mahasantri.find(x => x.id.toLowerCase() === santriId.toLowerCase());
+      const logBox = document.getElementById("lastScannedLog");
+
+      if (!foundSantri) {
+        logBox.innerHTML = `<span class="text-rose-600 font-bold">Terdeteksi ID: ${originalID(decodedText)} (Gagal! Data Mahasantri Tidak Terdaftar)</span>`;
+        showToast(`ID ${santriId} tidak terdaftar di asrama!`, "❌");
+        return;
+      }
+
+      function originalID(txt) {
+        return txt;
+      }
+
+      // Update log display
+      const isInstant = document.getElementById("scannerInstantMode").checked;
+      
+      logBox.innerHTML = `
+        <div class="space-y-1">
+          <p class="font-bold text-slate-800">✅ Terpindai: ${foundSantri.nama} (${foundSantri.id})</p>
+          <p class="text-[10px] text-slate-400">Metode: ${isInstant ? 'Direct Instant Present' : 'Form Fill-In Manual'}</p>
+        </div>
+      `;
+
+      if (isInstant) {
+        // Langsung catat kehadiran Hadir untuk shalat aktif
+        saveAttendanceDirect(foundSantri.id, foundSantri.nama, activePrayerTime, "Hadir");
+      } else {
+        // Masuk ke Mode Manual, otomatis pilih nama, shalat dan minta divisi ubudiyah konfirmasi
+        setPresensiMode('manual');
+        document.getElementById("santriSelect").value = foundSantri.id;
+        updateWaktuSelection(activePrayerTime);
+        updateStatusSelection("Hadir");
+        showToast("ID Santri berhasil dimasukkan. Silakan periksa data sebelum menyimpan.", "✍️");
+      }
+    }
+
+    function onScanFailure(error) {
+      // Tidak perlu logs untuk kegagalan frame pembacaan biasa
+    }
+
+    // Save attendance langsung dari Scanner instan
+    function saveAttendanceDirect(id, nama, waktu, status) {
+      if (state.mode === "local") {
+        const now = new Date();
+        const tglStr = now.toISOString().split('T')[0];
+
+        // Ganti jika sudah ada absensi santri di hari & waktu shalat sama
+        const existIdx = state.absensi.findIndex(x => x.tanggal === tglStr && x.id === id && x.waktuShalat === waktu);
+        
+        if (existIdx !== -1) {
+          state.absensi[existIdx].status = status;
+          state.absensi[existIdx].timestamp = now.toISOString();
+        } else {
+          state.absensi.push({
+            timestamp: now.toISOString(),
+            tanggal: tglStr,
+            id: id,
+            nama: nama,
+            waktuShalat: waktu,
+            status: status
+          });
+        }
+
+        saveState();
+        showToast(`Sukses Absen ${waktu}: ${nama} (Hadir)!`, "🎉");
+        refreshData();
+      } else {
+        // Kirim Online ke Sheets
+        if (!state.apiUrl) {
+          showToast("Atur URL API di pengaturan dahulu!", "❌");
+          return;
+        }
+
+        fetch(state.apiUrl, {
+          method: "POST",
+          body: JSON.stringify({
+            aksi: "submitAbsensi",
+            id: id,
+            waktuShalat: waktu,
+            status: status
+          })
+        })
+        .then(res => res.json())
+        .then(response => {
+          if (response.status === "success") {
+            showToast(`${nama} berhasil absen ${waktu}!`, "🎉");
+            refreshData();
+          } else {
+            showToast("Gagal API: " + response.message, "❌");
+          }
+        })
+        .catch(err => showToast("Koneksi cloud gagal.", "❌"));
+      }
+    }
+
+    // ================== DATA REFRESH & FETCH LOGIC ==================
+    function refreshData() {
+      if (state.mode === "local") {
+        renderDashboard();
+        renderDropdownMahasantri();
+        renderTableMahasantri();
+        renderTableRekap();
+      } else {
+        fetchFromGoogleSheets();
+      }
+    }
+
+    // Simpan API URL baru dan hubungkan
+    function testApiConnection() {
+      const url = document.getElementById("inputApiUrl").value.trim();
+      if (!url) {
+        showToast("Masukkan URL Apps Script API terlebih dahulu!", "❌");
+        return;
+      }
+      
+      state.apiUrl = url;
+      saveState();
+      showToast("Sedang menghubungkan ke Google Sheets...", "⚡");
+
+      // Kirim test request aksi getMahasantri
+      fetch(url, {
+        method: "POST",
+        mode: "no-cors", 
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ aksi: "getMahasantri" })
+      })
+      .then(() => {
+        showToast("Berhasil terhubung ke database!", "🎉");
+        refreshData();
+      })
+      .catch(err => {
+        console.error(err);
+        showToast("Gagal terhubung, periksa kembali URL Anda.", "❌");
+      });
+    }
+
+    // Ambil data murni dari Google App Script API
+    function fetchFromGoogleSheets() {
+      if (!state.apiUrl) {
+        showToast("Konfigurasikan API URL di Pengaturan!", "❌");
+        return;
+      }
+
+      showToast("Menyinkronkan data dengan Google Sheets...", "📥");
+
+      // 1. Fetch Mahasantri
+      fetch(state.apiUrl, {
+        method: "POST",
+        body: JSON.stringify({ aksi: "getMahasantri" })
+      })
+      .then(res => res.json())
+      .then(response => {
+        if (response.status === "success") {
+          state.mahasantri = response.data;
+          saveState();
+          renderDropdownMahasantri();
+          renderTableMahasantri();
+        }
+      })
+      .catch(err => console.error("Gagal memuat mahasantri:", err));
+
+      // 2. Fetch Rekap Absensi
+      fetch(state.apiUrl, {
+        method: "POST",
+        body: JSON.stringify({ aksi: "getRekap" })
+      })
+      .then(res => res.json())
+      .then(response => {
+        if (response.status === "success") {
+          renderTableRekapLive(response.data);
+          renderDashboardLive(response.data);
+        }
+      })
+      .catch(err => showToast("Gagal mengambil statistik dari awan.", "⚠️"));
+    }
+
+    // ================== CORE CRUD OPERASI ==================
+    function submitNewAbsensi() {
+      const select = document.getElementById("santriSelect");
+      const santriId = select.value;
+      const selectedText = select.options[select.selectedIndex].text;
+
+      if (!santriId) {
+        showToast("Pilih Mahasantri terlebih dahulu!", "⚠️");
+        return;
+      }
+
+      saveAttendanceDirect(santriId, selectedText, selectedWaktu, selectedStatus);
+    }
+
+    function addNewMahasantri() {
+      const id = document.getElementById("newSantriId").value.trim();
+      const nama = document.getElementById("newSantriNama").value.trim();
+
+      if (!id || !nama) return;
+
+      if (state.mode === "local") {
+        // Cek apakah ID sudah ada
+        if (state.mahasantri.some(x => x.id.toLowerCase() === id.toLowerCase())) {
+          showToast("ID Mahasantri sudah digunakan!", "❌");
+          return;
+        }
+
+        state.mahasantri.push({ id, nama });
+        saveState();
+        
+        document.getElementById("newSantriId").value = "";
+        document.getElementById("newSantriNama").value = "";
+        
+        showToast(`Berhasil menambahkan ${nama}!`, "🎉");
+        refreshData();
+      } else {
+        // Mode Live: Kirim langsung ke Google Sheets API
+        if (!state.apiUrl) {
+          showToast("Atur URL API di pengaturan dahulu!", "❌");
+          return;
+        }
+
+        showToast("Menyimpan mahasantri ke Google Sheets...", "⚡");
+
+        fetch(state.apiUrl, {
+          method: "POST",
+          body: JSON.stringify({
+            aksi: "addMahasantri",
+            id: id,
+            nama: nama
+          })
+        })
+        .then(res => res.json())
+        .then(response => {
+          if (response.status === "success") {
+            if (response.message.startsWith("Sukses")) {
+              document.getElementById("newSantriId").value = "";
+              document.getElementById("newSantriNama").value = "";
+              showToast(response.message, "🎉");
+              refreshData();
+            } else {
+              showToast(response.message, "❌");
+            }
+          } else {
+            showToast("Gagal API: " + response.message, "❌");
+          }
+        })
+        .catch(err => {
+          console.error(err);
+          showToast("Koneksi cloud gagal.", "❌");
+        });
+      }
+    }
+
+    function deleteMahasantri(id) {
+      // Menggunakan Dialog Custom, bukan confirm() bawaan browser
+      showConfirmDialog(
+        "Hapus Mahasantri", 
+        "Apakah Anda yakin ingin menghapus mahasantri ini beserta seluruh riwayat absensinya?", 
+        () => {
+          if (state.mode === "local") {
+            state.mahasantri = state.mahasantri.filter(x => x.id !== id);
+            state.absensi = state.absensi.filter(x => x.id !== id);
+            
+            saveState();
+            showToast("Mahasantri berhasil dihapus.", "🗑️");
+            refreshData();
+          } else {
+            // Mode Live: Kirim hapus ke Google Sheets API
+            if (!state.apiUrl) {
+              showToast("Atur URL API di pengaturan dahulu!", "❌");
+              return;
+            }
+
+            showToast("Menghapus mahasantri dari Google Sheets...", "⚡");
+
+            fetch(state.apiUrl, {
+              method: "POST",
+              body: JSON.stringify({
+                aksi: "deleteMahasantri",
+                id: id
+              })
+            })
+            .then(res => res.json())
+            .then(response => {
+              if (response.status === "success") {
+                if (response.message.startsWith("Sukses")) {
+                  showToast(response.message, "🗑️");
+                  refreshData();
+                } else {
+                  showToast(response.message, "❌");
+                }
+              } else {
+                showToast("Gagal API: " + response.message, "❌");
+              }
+            })
+            .catch(err => {
+              console.error(err);
+              showToast("Koneksi cloud gagal.", "❌");
+            });
+          }
+        }
+      );
+    }
+
+    // ================== RENDER LOGIC: METRICS & LEADERBOARDS ==================
+    function renderDashboard() {
+      const totalSantri = state.mahasantri.length;
+      document.getElementById("statTotalSantri").textContent = totalSantri;
+
+      const now = new Date();
+      const tglToday = now.toISOString().split('T')[0];
+
+      // Absensi hari ini
+      const absensiToday = state.absensi.filter(x => x.tanggal === tglToday);
+      
+      // Hadir hari ini
+      const hadirToday = absensiToday.filter(x => x.status === "Hadir").length;
+      document.getElementById("statHadirToday").textContent = hadirToday;
+
+      // Izin & Sakit hari ini
+      const izinSakitToday = absensiToday.filter(x => x.status === "Izin" || x.status === "Sakit").length;
+      document.getElementById("statIzinToday").textContent = izinSakitToday;
+
+      // Persentase Subuh Hari Ini
+      const subuhTodayTotal = absensiToday.filter(x => x.waktuShalat === "Subuh");
+      const subuhHadir = subuhTodayTotal.filter(x => x.status === "Hadir").length;
+      const subuhPercent = totalSantri > 0 ? Math.round((subuhHadir / totalSantri) * 100) : 0;
+      document.getElementById("statSubuhToday").textContent = subuhPercent + "%";
+
+      // Global Stats Breakdowns (30 Hari Terakhir)
+      const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      const absensiMonth = state.absensi.filter(x => new Date(x.tanggal) >= oneMonthAgo);
+
+      const prayers = ["Subuh", "Maghrib", "Isya"];
+      prayers.forEach(p => {
+        const prayAbs = absensiMonth.filter(x => x.waktuShalat === p);
+        const hadir = prayAbs.filter(x => x.status === "Hadir").length;
+        const totalIdeal = totalSantri * 30; // 30 hari
+        const pct = totalIdeal > 0 ? Math.round((hadir / totalIdeal) * 100) : 0;
+
+        document.getElementById(`bar${p}`).style.width = pct + "%";
+        document.getElementById(`bar${p}Percent`).textContent = pct + "%";
+      });
+
+      // Leaderboard Render (Berdasarkan jumlah Hadir 30 Hari terakhir)
+      const studentHadirCounts = {};
+      state.mahasantri.forEach(s => {
+        studentHadirCounts[s.id] = { nama: s.nama, id: s.id, count: 0 };
+      });
+
+      absensiMonth.forEach(abs => {
+        if (abs.status === "Hadir" && studentHadirCounts[abs.id]) {
+          studentHadirCounts[abs.id].count++;
+        }
+      });
+
+      const sortedLeaderboard = Object.values(studentHadirCounts).sort((a, b) => b.count - a.count).slice(0, 3);
+      
+      const container = document.getElementById("leaderboardList");
+      container.innerHTML = "";
+
+      if (sortedLeaderboard.length === 0 || totalSantri === 0) {
+        container.innerHTML = `<p class="text-xs text-slate-400 text-center py-4">Belum ada statistik performa bulan ini.</p>`;
+        return;
+      }
+
+      const medals = ["🥇", "🥈", "🥉"];
+      sortedLeaderboard.forEach((s, idx) => {
+        const idealKehadiran = 30 * 3; // 30 hari x 3 shalat
+        const pct = Math.round((s.count / idealKehadiran) * 100);
+        
+        const card = document.createElement("div");
+        card.className = "flex items-center justify-between p-3.5 bg-slate-50 border border-slate-100 rounded-2xl hover:border-blue-300 transition-colors";
+        card.innerHTML = `
+          <div class="flex items-center space-x-3">
+            <span class="text-xl animate-bounce-gentle">${medals[idx] || '👤'}</span>
+            <div>
+              <p class="font-bold text-sm text-slate-800">${s.nama}</p>
+              <p class="text-[10px] text-slate-400">Kehadiran Jamaah: ${s.count} kali</p>
+            </div>
+          </div>
+          <span class="text-xs font-bold px-3 py-1 bg-blue-50 text-blue-700 rounded-lg flex items-center space-x-1">
+            <span class="animate-pulse-slow">🔥</span>
+            <span>${pct}% Rajin</span>
+          </span>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    // Dashboard Render Live (Menggunakan data hasil response Google Sheets API)
+    function renderDashboardLive(rekapList) {
+      const totalSantri = rekapList.length;
+      document.getElementById("statTotalSantri").textContent = totalSantri;
+
+      // Render Leaderboard berdasarkan total kehadiran 30 hari dari Google sheets
+      const sortedLeaderboard = [...rekapList].sort((a, b) => b.bulanan.Total - a.bulanan.Total).slice(0, 3);
+      const container = document.getElementById("leaderboardList");
+      container.innerHTML = "";
+
+      const medals = ["🥇", "🥈", "🥉"];
+      sortedLeaderboard.forEach((s, idx) => {
+        const idealKehadiran = 30 * 3;
+        const pct = Math.round((s.bulanan.Total / idealKehadiran) * 100);
+
+        const card = document.createElement("div");
+        card.className = "flex items-center justify-between p-3.5 bg-slate-50 border border-slate-100 rounded-2xl hover:border-blue-300 transition-colors";
+        card.innerHTML = `
+          <div class="flex items-center space-x-3">
+            <span class="text-xl animate-bounce-gentle">${medals[idx] || '👤'}</span>
+            <div>
+              <p class="font-bold text-sm text-slate-800">${s.nama}</p>
+              <p class="text-[10px] text-slate-400">Kehadiran Jamaah: ${s.bulanan.Total} kali</p>
+            </div>
+          </div>
+          <span class="text-xs font-bold px-3 py-1 bg-blue-50 text-blue-700 rounded-lg flex items-center space-x-1">
+            <span class="animate-pulse-slow">🔥</span>
+            <span>${pct}% Rajin</span>
+          </span>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    // ================== DROPDOWN & TABLE MANAGEMENTS ==================
+    function renderDropdownMahasantri() {
+      const select = document.getElementById("santriSelect");
+      // Simpan nilai lama
+      const currentVal = select.value;
+
+      select.innerHTML = `<option value="">-- Pilih Mahasantri --</option>`;
+      state.mahasantri.forEach(s => {
+        const opt = document.createElement("option");
+        opt.value = s.id;
+        opt.textContent = `[${s.id}] ${s.nama}`;
+        select.appendChild(opt);
+      });
+
+      select.value = currentVal;
+    }
+
+    function renderTableMahasantri() {
+      const tbody = document.getElementById("santriTableBody");
+      document.getElementById("totalSantriCountBadge").textContent = `${state.mahasantri.length} Orang`;
+      
+      tbody.innerHTML = "";
+
+      if (state.mahasantri.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="3" class="p-6 text-center text-slate-400">Belum ada mahasantri yang terdaftar.</td></tr>`;
+        return;
+      }
+
+      state.mahasantri.forEach(s => {
+        const tr = document.createElement("tr");
+        tr.className = "hover:bg-slate-50";
+        tr.innerHTML = `
+          <td class="p-4 font-mono text-xs font-semibold text-slate-500">${s.id}</td>
+          <td class="p-4 font-bold text-slate-800">${s.nama}</td>
+          <td class="p-4 text-right">
+            <button onclick="deleteMahasantri('${s.id}')" class="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-bold rounded-lg transition cursor-pointer">
+              Hapus
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // Rekap Table Render Local
+    function renderTableRekap() {
+      const tbody = document.getElementById("rekapTableBody");
+      tbody.innerHTML = "";
+
+      if (state.mahasantri.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="9" class="p-6 text-center text-slate-400">Tidak ada data rekapitulasi.</td></tr>`;
+        return;
+      }
+
+      // Hitung absensi
+      const now = new Date();
+      const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+      state.mahasantri.forEach(s => {
+        const santriAbs = state.absensi.filter(x => x.id === s.id);
+
+        const mingguan = { Subuh: 0, Maghrib: 0, Isya: 0, Total: 0 };
+        const bulanan = { Subuh: 0, Maghrib: 0, Isya: 0, Total: 0 };
+
+        santriAbs.forEach(abs => {
+          const tgl = new Date(abs.tanggal);
+          if (abs.status === "Hadir") {
+            if (tgl >= oneWeekAgo) {
+              mingguan[abs.waktuShalat]++;
+              mingguan.Total++;
+            }
+            if (tgl >= oneMonthAgo) {
+              bulanan[abs.waktuShalat]++;
+              bulanan.Total++;
+            }
+          }
+        });
+
+        const tr = document.createElement("tr");
+        tr.className = "hover:bg-slate-100/50 cursor-pointer border-b border-slate-100 transition";
+        tr.onclick = () => openStatsModal(s.id, s.nama, mingguan, bulanan);
+        tr.innerHTML = `
+          <td class="p-4 font-bold text-slate-800">${s.nama}</td>
+          <td class="p-2 text-center text-slate-500 font-medium">${mingguan.Subuh}</td>
+          <td class="p-2 text-center text-slate-500 font-medium">${mingguan.Maghrib}</td>
+          <td class="p-2 text-center text-slate-500 font-medium">${mingguan.Isya}</td>
+          <td class="p-2 text-center font-extrabold bg-blue-50 text-blue-800 rounded-md">${mingguan.Total}</td>
+          <td class="p-2 text-center text-slate-500 font-medium">${bulanan.Subuh}</td>
+          <td class="p-2 text-center text-slate-500 font-medium">${bulanan.Maghrib}</td>
+          <td class="p-2 text-center text-slate-500 font-medium">${bulanan.Isya}</td>
+          <td class="p-2 text-center font-extrabold bg-blue-50 text-blue-800 rounded-md">${bulanan.Total}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // Rekap Table Render API Live
+    function renderTableRekapLive(rekapList) {
+      const tbody = document.getElementById("rekapTableBody");
+      tbody.innerHTML = "";
+
+      if (rekapList.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="9" class="p-6 text-center text-slate-400">Belum ada data terekap.</td></tr>`;
+        return;
+      }
+
+      rekapList.forEach(s => {
+        const tr = document.createElement("tr");
+        tr.className = "hover:bg-slate-100/50 cursor-pointer border-b border-slate-100 transition";
+        tr.onclick = () => openStatsModal(s.id, s.nama, s.mingguan, s.bulanan);
+        tr.innerHTML = `
+          <td class="p-4 font-bold text-slate-800">${s.nama}</td>
+          <td class="p-2 text-center text-slate-500 font-medium">${s.mingguan.Subuh}</td>
+          <td class="p-2 text-center text-slate-500 font-medium">${s.mingguan.Maghrib}</td>
+          <td class="p-2 text-center text-slate-500 font-medium">${s.mingguan.Isya}</td>
+          <td class="p-2 text-center font-extrabold bg-blue-50 text-blue-800 rounded-md">${s.mingguan.Total}</td>
+          <td class="p-2 text-center text-slate-500 font-medium">${s.bulanan.Subuh}</td>
+          <td class="p-2 text-center text-slate-500 font-medium">${s.bulanan.Maghrib}</td>
+          <td class="p-2 text-center text-slate-500 font-medium">${s.bulanan.Isya}</td>
+          <td class="p-2 text-center font-extrabold bg-blue-50 text-blue-800 rounded-md">${s.bulanan.Total}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // Filter Rekap pencarian nama
+    function filterRekapTable() {
+      const keyword = document.getElementById("rekapSearch").value.toLowerCase();
+      const rows = document.querySelectorAll("#rekapTableBody tr");
+
+      rows.forEach(row => {
+        const nama = row.cells[0]?.textContent.toLowerCase();
+        if (nama && nama.includes(keyword)) {
+          row.style.display = "";
+        } else {
+          row.style.display = "none";
+        }
+      });
+    }
+
+    // ================== INDIVIDUAL STATS RAPOR MODAL ==================
+    function openStatsModal(id, nama, mingguan, bulanan) {
+      document.getElementById("modalStudentName").textContent = nama;
+      document.getElementById("modalStudentId").textContent = "ID: " + id;
+
+      const idealMinggu = 7 * 3; // 21 Shalat
+      const idealBulan = 30 * 3; // 90 Shalat
+
+      const mingguPct = Math.round((mingguan.Total / idealMinggu) * 100);
+      const bulanPct = Math.round((bulanan.Total / idealBulan) * 100);
+
+      document.getElementById("modalWeeklyScore").textContent = mingguPct + "%";
+      document.getElementById("modalWeeklyCounts").textContent = `${mingguan.Total}/${idealMinggu} Kehadiran`;
+      
+      document.getElementById("modalMonthlyScore").textContent = bulanPct + "%";
+      document.getElementById("modalMonthlyCounts").textContent = `${bulanan.Total}/${idealBulan} Kehadiran`;
+
+      // Breakdown Detail (Masing-masing maks 30 kali hadir subuh/maghrib/isya dalam sebulan)
+      const subuhPct = Math.round((bulanan.Subuh / 30) * 100);
+      const maghribPct = Math.round((bulanan.Maghrib / 30) * 100);
+      const isyaPct = Math.round((bulanan.Isya / 30) * 100);
+
+      document.getElementById("modalBreakdownSubuh").style.width = subuhPct + "%";
+      document.getElementById("modalBreakdownSubuhPercent").textContent = subuhPct + "%";
+
+      document.getElementById("modalBreakdownMaghrib").style.width = maghribPct + "%";
+      document.getElementById("modalBreakdownMaghribPercent").textContent = maghribPct + "%";
+
+      document.getElementById("modalBreakdownIsya").style.width = isyaPct + "%";
+      document.getElementById("modalBreakdownIsyaPercent").textContent = isyaPct + "%";
+
+      document.getElementById("statsModal").classList.remove("hidden");
+    }
+
+    function closeStatsModal() {
+      document.getElementById("statsModal").classList.add("hidden");
+    }
+
+    // ================== INITIALIZATION ==================
+    window.onload = function() {
+      // Pasang tanggal hari ini
+      const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+      document.getElementById("currentDateString").textContent = new Date().toLocaleDateString('id-ID', options);
+
+      loadState();
+      
+      // Inisialisasi visual active card di formulir
+      updateWaktuSelection("Subuh");
+      updateStatusSelection("Hadir");
+
+      // Render pertama kali
+      refreshData();
+    };
+  </script>
+</body>
+</html>
